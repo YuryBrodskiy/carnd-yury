@@ -1,0 +1,5 @@
+*/.idea
+*/.ipynb_checkpoints
+*/__pycache__
+CarND-Behavioral-Cloning-P3/result
+train_kill
