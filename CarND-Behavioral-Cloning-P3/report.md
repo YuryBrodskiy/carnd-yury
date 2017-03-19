@@ -15,7 +15,7 @@ A  successful drive through the test track was achieved by using [Nvidia neural 
 
 ---
 
-###1. Files Submitted 
+### 1. Files Submitted 
 
 The code is accessible via [link](http:/github.com/).
 
@@ -27,21 +27,23 @@ The code is accessible via [link](http:/github.com/).
 * video.mp4 record of successful autonomous test drive
 * report\_img  folder with images used in this report
 
-###2. Execution of the submitted files
+### 2. Execution of the submitted files
 Using the Udacity provided simulator, the car can be driven autonomously around the track by executing in the root folder of the submission:
 
-```python drive.py model.h5
+```sh
+python drive.py model.h5
 ```
 
 The model can be retrained by executing
 
-```mkdir -p result
+```sh
+mkdir -p result
 training.py --offset 0.05 --gain 5.0 --epoch 10  model_nvidia ./data/
 ```
 
 where `model_nvidia` is the name of the model and `./data/` the path to stored images
 
-###3. Submited code
+### 3. Submited code
 
 The model.py file contains the code for training and saving the convolution neural network. All necessary elements are documented inside.
 Following entry points are important:
@@ -53,14 +55,16 @@ Following entry points are important:
 
 The drive.py was modified for better PI parameters and speed. 
 
-###Model Architecture and Training Strategy
+### Model Architecture and Training Strategy
 
-####1. The model architecture
+#### 1. The model architecture 
+
 <div style="float: right; height:800px;">
 <div style="text-align: center; vertical-align: middle; margins:0px; padding:0;"> Final architecture Nvidia <br/> with regularization 
 </div>
 <img  style="height:800px; margins:0px; padding:0;" src="./report_img/nvidia_reg.png"/>
 </div>
+
 The [Nvidia model](https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/) is adopted for predicting the steering angles. This model was chosen as it was proven to work for such application. The only modifications to the architecture are done to prevent overfit and improve gradient flow.
  
 The model is defined in function ```model_nvidia()```. It consists of three strided 5x5 convolution layers with increasing depth 24, 36, 48 accordingly, followed by two 3x3 convolution layers with depth 64 and finally steering angle is generated using four dense layers. The ReLu nonlinearity is used between each layer. 
