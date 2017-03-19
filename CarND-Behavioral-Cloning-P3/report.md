@@ -30,13 +30,13 @@ The code is accessible via [link](http:/github.com/).
 ### 2. Execution of the submitted files
 Using the Udacity provided simulator, the car can be driven autonomously around the track by executing in the root folder of the submission:
 
-```sh
+```
 python drive.py model.h5
 ```
 
 The model can be retrained by executing
 
-```sh
+```
 mkdir -p result
 training.py --offset 0.05 --gain 5.0 --epoch 10  model_nvidia ./data/
 ```
@@ -82,7 +82,7 @@ Final architecture is depicted on the right.
 
  
 
-####3. Creation of the Training Set
+#### 3. Creation of the Training Set
 
 To capture good driving behavior, I first recorded three laps on track one using center lane driving. Here is an example image of center lane driving:
 
@@ -113,7 +113,7 @@ The network was trained and tested with this data. This revealed that several se
 
 Additional passes through difficult sections were recorded and added to the data set. The network was re-trained. This has eliminated the problems in difficult sections.
 
-####4. Training Process
+#### 4. Training Process
 
 The training pipeline consists of following elements:
 
@@ -129,7 +129,7 @@ The training data is augmented(as described above) to improve generalization. Th
 Specific callbacks are included in the training procedure to store the model with minimal validation loss and stop training if validation loss starts to grow. Thus if during training the model starts to overfit the data that can be detected using validation set and training is terminated.
 The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
 
-###Notes & Conclusion
+### Notes & Conclusion
 
 A  successful drive through the test track was achieved by using [Nvidia neural network](https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/). The resulting model allows the car to stay on the driveable part of the road, however, in straigth sections of the road the car shows an oscillatory behavior around the center line of the track. 
 
