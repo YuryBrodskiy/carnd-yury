@@ -56,7 +56,11 @@ The drive.py was modified for better PI parameters and speed.
 ###Model Architecture and Training Strategy
 
 ####1. The model architecture
-
+<div style="float: right; height:800px;">
+<div style="text-align: center; vertical-align: middle; margins:0px; padding:0;"> Final architecture Nvidia <br/> with regularization 
+</div>
+<img  style="height:800px; margins:0px; padding:0;" src="./report_img/nvidia_reg.png"/>
+</div>
 The [Nvidia model](https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/) is adopted for predicting the steering angles. This model was chosen as it was proven to work for such application. The only modifications to the architecture are done to prevent overfit and improve gradient flow.
  
 The model is defined in function ```model_nvidia()```. It consists of three strided 5x5 convolution layers with increasing depth 24, 36, 48 accordingly, followed by two 3x3 convolution layers with depth 64 and finally steering angle is generated using four dense layers. The ReLu nonlinearity is used between each layer. 
@@ -70,9 +74,8 @@ A dropout layer is placed after first convolution layer to decrease dependency o
 
 [Batch normalization layer](https://arxiv.org/abs/1502.03167) is placed after last 5x5 convolution layer of the network. It will increase the speed of learning by improving the gradient propagation and reducing dependency on the initialization. It also reduces chance of overfit.
  
-Final architecture is depicted below:
+Final architecture is depicted on the right.
 
-![NVidia network](./report_img/nvidia_reg.png)
  
 
 ####3. Creation of the Training Set
@@ -89,7 +92,7 @@ The data set was augmented with images captured by the left and right cameras. A
 
 It is done to avoid bias on turning left in the data set that is present due to circular nature of the training track. Below is the histogram of the steering angles in data set before and after augmentation:
 
-![alt text][image4]
+![Data histogram](./report_img/data_hist.png)
 
 Before augmentation, the data is clearly biased to the negative values.
 

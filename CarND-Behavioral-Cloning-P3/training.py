@@ -21,18 +21,18 @@ import pickle
 s_epoch = 10
 
 # tune-able parameters of data augmentation, has significant effect on drive quality
-s_steer_offset = 0.20
-s_steer_gain = 0.00
+s_steer_offset = 0.05
+s_steer_gain = 5.00
 
 # list of used data augmentation
 augment_list = \
     [
-      #  lambda x: get_img(x, 1),
+        lambda x: get_img(x, 1),
         lambda x: get_img(x, 0),
-      #  lambda x: get_img(x, 2),
-      #  lambda x: image_flip(*get_img(x, 1)),
+        lambda x: get_img(x, 2),
+        lambda x: image_flip(*get_img(x, 1)),
         lambda x: image_flip(*get_img(x, 0)),
-      #  lambda x: image_flip(*get_img(x, 2)),
+        lambda x: image_flip(*get_img(x, 2)),
     ]
 
 
@@ -75,12 +75,9 @@ def get_data_list(s_dir):
                 # for index in range(len(augment_list)):
                 #     lines.append((line, index))
 
-            if abs(float(line[3])) > 0.002:
-                for index in range(len(augment_list)):
-                    lines.append((line, index))
-            else:
-                for index in range(0, len(augment_list), 2):
-                    lines.append((line, random.randint(0, len(augment_list) - 1)))
+            for index in range(len(augment_list)):
+                lines.append((line, index))
+
     return lines
 
 
@@ -94,18 +91,18 @@ def get_img(line, index):
     :param index: 0- center, 1 -left, 2-right
     :return: tuple image and steering angle
     """
-    m = float(line[3])
-    f = m * 25.0 / 180.0 * np.pi
-    k = s_steer_gain
-    corrected_value = np.array([
-        f,
-        np.arctan2(np.sin(f), (np.cos(f) - np.sign(f) * k)),
-        np.arctan2(np.sin(f), (np.cos(f) + np.sign(f) * k))
-    ])
-    corrected_value = corrected_value / np.pi * 180.0 / 25.0
     correction_offset = np.array([0.0, s_steer_offset, -s_steer_offset])
-    steer_val = min(max(corrected_value[index] + correction_offset[index], -1.0), 1.0)
-    return cv2.imread(line[index]), steer_val
+    measurement = float(line[3])
+    if measurement == 0.0:
+        correction_gain = [1.0, 1.0, 1.0]
+        correction_offset *= 2.0
+    elif measurement > 0.0:
+        correction_gain = [1.0, s_steer_gain, 1.0/s_steer_gain]
+    elif measurement < 0.0:
+        correction_gain = [1.0, 1.0/s_steer_gain, s_steer_gain]
+    result_steering = measurement*correction_gain[index] + correction_offset[index]
+    img = cv2.imread(line[index])
+    return img, min(max(result_steering, -1), 1)
 
 
 def generator(samples, batch_size=32):
@@ -137,7 +134,7 @@ def model_nvidia():
     :return: keras model of Nvidia network
     """
     model = Sequential()
-    model.add(Cropping2D(cropping=((50, 20), (5, 5)), input_shape=(160, 320, 3)))
+    model.add(Cropping2D(cropping=((50, 20), (0, 0)), input_shape=(160, 320, 3)))
     model.add(Lambda(lambda x: x / 255.0 - 0.5))
     model.add(Convolution2D(24, 5, 5, subsample=(2, 2), activation='relu', init='he_normal'))
     model.add(Dropout(0.4))
