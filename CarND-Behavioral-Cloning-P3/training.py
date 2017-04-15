@@ -51,7 +51,7 @@ def image_flip(image, value):
     return image_flipped, measurement_flipped
 
 
-def get_data_list(s_dir):
+def get_data_list(s_dirs):
     """
     Read csv file and prepare the list of accessible files with augmentation indexes
     This list can be directly used by generator to supply the images for learning
@@ -64,19 +64,21 @@ def get_data_list(s_dir):
     :return: list of rows from csv file with corrected address and augment index
     """
     lines = []
-    with open(s_dir + 'driving_log.csv') as csvfile:
-        reader = csv.reader(csvfile)
-        it_reader = iter(reader)
-        next(it_reader)
-        for line in it_reader:
-            for i in range(3):
-                filename = line[i].split('/')[-1]
-                line[i] = s_dir + 'IMG/' + filename
-                # for index in range(len(augment_list)):
-                #     lines.append((line, index))
+    s_dir_list = s_dirs.split(";")
+    for s_dir in s_dir_list:
+        with open(s_dir + '/driving_log.csv') as csvfile:
+            reader = csv.reader(csvfile)
+            it_reader = iter(reader)
+            next(it_reader)
+            for line in it_reader:
+                for i in range(3):
+                    filename = line[i].split('/')[-1]
+                    line[i] = s_dir + '/IMG/' + filename
+                    # for index in range(len(augment_list)):
+                    #     lines.append((line, index))
 
-            for index in range(len(augment_list)):
-                lines.append((line, index))
+                for index in range(len(augment_list)):
+                    lines.append((line, index))
 
     return lines
 
@@ -154,6 +156,36 @@ def model_nvidia():
     model.add(Dense(50, init='he_normal'))
     model.add(Activation('relu'))
     model.add(Dropout(0.2))
+    model.add(Dense(10, init='he_normal'))
+    model.add(Activation('relu'))
+    model.add(Dense(1))
+    return model
+
+def model_nvidia_bn():
+    """
+    :return: keras model of Nvidia network
+    """
+    model = Sequential()
+    model.add(Cropping2D(cropping=((50, 20), (0, 0)), input_shape=(160, 320, 3)))
+    model.add(Lambda(lambda x: x / 255.0 - 0.5))
+    model.add(Convolution2D(24, 5, 5, subsample=(2, 2), activation='relu', init='he_normal'))
+    model.add(BatchNormalization())
+    model.add(Convolution2D(36, 5, 5, subsample=(2, 2), activation='relu', init='he_normal'))
+    model.add(Convolution2D(48, 5, 5, subsample=(2, 2), init='he_normal'))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(Convolution2D(64, 3, 3, activation='relu', init='he_normal'))
+    model.add(Convolution2D(64, 3, 3, activation='relu', init='he_normal'))
+    model.add(BatchNormalization())
+    model.add(Flatten())
+    model.add(Dense(1164, init='he_normal'))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
+    model.add(Dense(100, init='he_normal'))
+    model.add(Activation('relu'))
+    model.add(Dense(50, init='he_normal'))
+    model.add(Activation('relu'))
+    model.add(BatchNormalization())
     model.add(Dense(10, init='he_normal'))
     model.add(Activation('relu'))
     model.add(Dense(1))
@@ -240,6 +272,7 @@ def menu():
         {
             'model_nvidia': model_nvidia,
             'model_nvidia_6': model_nvidia_6,
+            'model_nvidia_bn': model_nvidia_bn,
         }
     if args.offset:
         s_steer_offset = args.offset
