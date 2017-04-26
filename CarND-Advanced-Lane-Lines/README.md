@@ -18,7 +18,7 @@ An image processing pipeline was built that allows to detect road marking lines.
 
 
 ## Files submitted
-The code is accesible on [github link](https://github.com/...)
+The code is accesible on [github link](https://github.com/YuryBrodskiy/carnd-yury.git)
 
 * Advanced-Lane-Finding.ipynb contains the code of the pipeline and related tests
 * report.md summary the results
