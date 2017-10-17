@@ -126,15 +126,20 @@ The other vehicles positions and movement are predicted during the planned traje
 
 ### Path planning
 
-The proposed path planner attempts to select the fastest lane on the road and generates trajectories to change to that lane. The trajectories are always planned to have maximum allowed/safe speed in the lane. The maximum safe speed is determined as the minimum between the speed limit and the speed of the vehicle in front of the ego vehicle. Target lane and the maximum speed of that lane used to generate a minimal time JMT polynomial trajectory that will not violate jerk or acceleration limits. [getPoly in EgoVehicle class]. Thus all trajectories generated are always conforming to dynamic limits.
+The proposed path planner attempts to select the fastest lane on the road and generates trajectories to change to that lane. 
 
-The 3 possible actions one for each road lane are evaluated based on the cost function. 
-The cost function include weighted: 
+The path planning is done in two steps:
+ 
++ For each lane  the maximum safe speed is determined as the minimum between the speed limit and the speed of the vehicle in front of the ego vehicle. A JMT polynomial trajectory is genererate that will not violate jerk or acceleration limits [getPoly in EgoVehicle class]. This achieved by gradually increasing the trajectory time until limits are satisfied. The trajectories are always planned to have maximum allowed/safe speed in the lane. Target  Thus all trajectories generated are always conforming to dynamic limits.
 
-+ final speed
-+ price to change lanes
-+ collision penalty
-+ occupancy of the lane.
-The action with the lowest cost is chosen and executed.
++ The best lane is selected based on the cost of the trajectory generated in the first step. Thus 3 possible actions one for each road lane are evaluated based on the cost function. The cost function includes weighted: 
+ + final speed
+ + price to change lanes
+ + collision penalty
+ + occupancy of the lane.
+ 
+The action with the lowest cost is chosen and executed for one cycle. In the next cycle the process is repeated and the new plan is created. 
 
+
+To visualize the future trajectories points at each cycle the car movement is simulated up to 2 seconds ahead, ad the planned trajectory is appended to the points sent to the simulator. Thus it is possible to see the future plan of the car.
 

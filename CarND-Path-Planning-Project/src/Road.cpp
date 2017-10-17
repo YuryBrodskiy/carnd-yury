@@ -184,7 +184,7 @@ utils::Waypoints Road::getHighDefinitionMap(const utils::Waypoints &map_points_o
     Waypoint start = projector(map_points_orig[m_indx]);
     Waypoint end = projector(map_points_orig[m_indx + 1]);
 
-    for (double x = start.x; x <= end.x; x += 0.05/*[m]*/ ) {
+    for (double x = start.x; x <= end.x; x += 0.01/*[m]*/ ) {
       double y = path(x);
       double ratio = distance(x, y, start.x, start.y) / distance(end.x, end.y, start.x, start.y);
       if (end.s < 0.001) {
@@ -290,7 +290,7 @@ double Road::get_collision_cost(const utils::Option &option) const
       const double y =v_state[3] - e_state[3];
 
       const double d_x = v.second.vehicleSize[0];
-      const double d_y = v.second.vehicleSize[1]/2;
+      const double d_y = v.second.vehicleSize[1];
       double dist =  distance(v_state[0],v_state[3],e_state[0],e_state[3]);
       if (dist > 5*(v.second.vehicleSize[1]+v.second.vehicleSize[0]))
         break;
@@ -298,8 +298,8 @@ double Road::get_collision_cost(const utils::Option &option) const
         //Function that creates a box like shape around the vehicle
         // it is 1 inside the collision boundary with a smooth fall off in the buffer zone and zero far away from the vehicle
       const double penetration_dist =
-          fabs(x - d_x) + fabs(x + 2*d_x) +  fabs(y - d_y) +  fabs(y + d_y) - 3 * d_x - 2* d_y;
-      result += logistic(-penetration_dist) + 1;
+          fabs(x - d_x) + fabs(x + 3*d_x)  - 4 * d_x +  5*( fabs(y - d_y) +  fabs(y + d_y)- 2* d_y);
+      result += logistic(- penetration_dist) + 1;
 
     }
 

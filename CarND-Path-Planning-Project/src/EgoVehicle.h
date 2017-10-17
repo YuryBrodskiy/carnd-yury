@@ -23,10 +23,10 @@ public:
 public:
   explicit EgoVehicle(Road& road);
   ~EgoVehicle() = default;
-  void update(std::vector<utils::Point>, double x, double y, double yaw, double s, double d);
-  EgoWaypoints getTrajectory(const EgoWaypoint&waypoint, double d);
+  void update(const std::vector<utils::Point>& prev_waypoints, double x, double y, double yaw, double s, double d);
+  EgoWaypoints getTrajectory(const EgoWaypoint& waypoint, double d);
   std::vector<std::vector<double> > getWaypoints();
-  utils::Poly2D getPoly(const utils::FrenetState& start, const utils::FrenetState& end, double& T);
+  utils::Poly2D getPoly(utils::FrenetState start,  utils::FrenetState end, double& T);
   utils::Poly2D getPolyExact(const utils::FrenetState& start, const utils::FrenetState& end, double& T);
   utils::Poly2D getPolySimple(const utils::FrenetState& start, const utils::FrenetState& end, double& T);
   double timeToSpeed(double c_speed, double t_speed);
@@ -39,8 +39,8 @@ private:
 
 public:
   Road* road_;
-  const double max_a     = 10*0.9;       //[m/s^2]
-  const double max_j     = 50*0.9;       //[m/s^3]
+  const double max_a     = 10*0.7;      //[m/s^2]
+  const double max_j     = 50;          //[m/s^3]
 
   const size_t steps_to_stitch  = 15; // path planner does not have duration to re-plan any thing for steps_to_stitch*step_t after updapte is called
 

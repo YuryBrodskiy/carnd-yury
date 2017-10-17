@@ -21,12 +21,13 @@ public:
     int id_;
   };
 
+  std::vector<double> center_lane = {2,6,9.8};
   explicit Road(std::string road_waipoint_file);
 
   ~Road() = default;
 
   const double max_s     = 6945.554; //[m]
-  const double max_v     = 21;    //[m/s]
+  const double max_v     = 22;    //[m/s]
   const double line_width  = 4; //[m]
   // Transform from Frenet s,d coordinates to Cartesian x,y
   utils::Waypoint getXY(double s, double d);
@@ -48,7 +49,7 @@ public:
   }
   double getD(int line) const
   {
-    return line_width*(line + 0.5);
+    return center_lane[line];
   }
   int num_lanes() const
   {

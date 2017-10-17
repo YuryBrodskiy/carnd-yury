@@ -7,6 +7,7 @@
 #include "EgoVehicle.h"
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
+#include "spline.h"
 
 
 using namespace std;
@@ -17,12 +18,13 @@ Log coLog("../data/laneCost.csv");
 
 EgoVehicle::EgoVehicle(Road &road)
     : road_(&road)
-    , steps_to_stitch(10)
+
 {
 
 }
 
-void EgoVehicle::update(std::vector<utils::Point> prev_waypoints, double x, double y, double yaw, double s, double d)
+
+void EgoVehicle::update(const std::vector<utils::Point>& prev_waypoints, double x, double y, double yaw, double s, double d)
 {
   size_t numpoints = trajectory_.size();
 
@@ -34,16 +36,20 @@ void EgoVehicle::update(std::vector<utils::Point> prev_waypoints, double x, doub
     } else
     {
       trLog.fout << it->waypoint.x << ", " << it->waypoint.y << ", " << it->waypoint.s << ", " << it->waypoint.d << ", "
-                 << it->fstate[1] << ", " << it->fstate[2] << ", " << it->fstate[4] << ", " << it->fstate[5] << endl;
+                 << it->fstate[1] << ", " << it->fstate[2] << ", " << it->fstate[4] << ", " << it->fstate[5] <<", "
+                 << s <<", " <<d << endl;
       trajectory_.erase(it);
 
     }
   }
 
-  if (trajectory_.size() > steps_to_stitch)
+  size_t points_to_leave = numpoints - trajectory_.size() + steps_to_stitch;
+
+  if ( trajectory_.size() > points_to_leave)
   {
-    trajectory_.resize(steps_to_stitch);
+    trajectory_.resize(points_to_leave);
   }
+
 
   if (trajectory_.size() == 0)
   {
@@ -60,6 +66,7 @@ void EgoVehicle::update(std::vector<utils::Point> prev_waypoints, double x, doub
     first_waypoint.target_lane = road_->getLine(d);
     trajectory_.push_back(first_waypoint);
   }
+
   double t = trajectory_.size() * step_t;
   while (trajectory_.size() < prediction_horizion)
   {
@@ -67,7 +74,7 @@ void EgoVehicle::update(std::vector<utils::Point> prev_waypoints, double x, doub
     t = t + next_waypoints.size() * step_t;
     trajectory_.insert(trajectory_.end(), next_waypoints.begin(), next_waypoints.end());
   }
-  trajectory_.erase(trajectory_.begin());
+  //trajectory_.erase(trajectory_.begin());
 
 }
 
@@ -140,19 +147,29 @@ double max_acc(const vector<double> &coef, double T)
   return ma;
 }
 
-vector<double> max_state(const vector<double> &coef, double T)
+vector<double> max_state(const vector<double> &s_coef, const vector<double> &d_coef, double T)
 {
-  vector<double> s_dot = diff(coef);
+  vector<double> s_dot = diff(s_coef);
   vector<double> s_d_dot = diff(s_dot);
-  vector<double> jerk = diff(s_d_dot);
-  double mv = abs(polyeval(s_dot, 0));
-  double ma = abs(polyeval(s_d_dot, 0));
-  double mj = abs(polyeval(jerk, 0));
-  for (int i = 0; i < 100; i++)
+  vector<double> s_dd_dot = diff(s_d_dot);
+
+  vector<double> d_dot = diff(d_coef);
+  vector<double> d_d_dot = diff(d_dot);
+  vector<double> d_dd_dot = diff(d_d_dot);
+
+
+  double mv = sqrt(pow(polyeval(s_dot,    0),2)+pow(polyeval(d_dot, 0),2));
+  double ma = sqrt(pow(polyeval(s_d_dot,  0),2)+pow(polyeval(d_d_dot, 0),2));
+  double mj = sqrt(pow(polyeval(s_dd_dot, 0),2)+pow(polyeval(d_dd_dot, 0),2));
+  double aa = 0;
+  double aj = 0;
+  for (int i = 0; i < 500; i++)
   {
-    double cv = abs(polyeval(s_dot, T / 100.0 * i));
-    double ca = abs(polyeval(s_d_dot, T / 100.0 * i));
-    double cj = abs(polyeval(jerk, T / 100.0 * i));
+    double cv =  sqrt(pow(polyeval(s_dot,    T / 500.0 * i),2)+pow(polyeval(d_dot,    T / 500.0 * i),2));
+    double ca =  fabs(polyeval(s_d_dot,      T / 500.0 * i)) + fabs(polyeval(d_d_dot, T / 500.0 * i));
+    double cj =  sqrt(pow(polyeval(s_dd_dot, T / 500.0 * i),2)+pow(polyeval(d_dd_dot, T / 500.0 * i),2));
+    aa += ca/500.0;
+    aj += cj/500.0;
     if (abs(mv) < cv)
     {
       mv = cv;
@@ -167,19 +184,23 @@ vector<double> max_state(const vector<double> &coef, double T)
       mj = cj;
     }
   }
-  return {mv, ma, mj};
+
+  return {mv, ma, mj, aa, aj};
 }
 
-Poly2D EgoVehicle::getPoly(const FrenetState &start, const FrenetState &end, double &T)
+Poly2D EgoVehicle::getPoly( FrenetState start,  FrenetState end, double &T)
 {
 
-  double _j;
-  double _a ;
+
   Poly2D result ;
+  vector<double> stat_d;
+  const double speed_start= sqrt(pow(start[1],2)+pow(start[4],2));
+  double speed_end = sqrt(pow(end[1],2)+pow(end[4],2));
   do
   {
     T = T + 0.2;
-    double end_pos = start[0] + 0.5 * (start[1] + end[1]) * T;
+
+    double end_pos = start[0]  + 0.5 * (speed_start + speed_end) * T;
 
     vector<double> s_start = {start[0], start[1], start[2]};
     vector<double> s_end = {end_pos, end[1], end[2]};
@@ -189,14 +210,28 @@ Poly2D EgoVehicle::getPoly(const FrenetState &start, const FrenetState &end, dou
     result.coef_s = getJMT(s_start, s_end, T);
     result.coef_d = getJMT(d_start, d_end, T);
 
-    vector<double> stat_d = max_state(result.coef_d, T);
-    vector<double> stat_s = max_state(result.coef_s, T);
+     stat_d = max_state(result.coef_d, result.coef_s, T);
+    //vector<double> stat_d2 = max_state2(result.coef_d, result.coef_s, T);
+    //cout<<stat_d2[0]<<", "<<stat_d2[1]<<", "<<stat_d2[3]<<endl;
 
-    _a = stat_d[1] + stat_s[1];
-    _j = stat_d[2] + stat_s[2];
+    if(stat_d[0] > road_->max_v)
+    {
+      end[1] = end[1]*0.95;
+      end[4] = end[4]*0.95;
+      speed_end = sqrt(pow(end[1],2)+pow(end[4],2));
+    }
+    if(T>100)
+    {
+      T = 100;
+      s_end = {start[0] + 0.5 * (start[1] + end[1]) * T, end[1], end[2]};
+      result.coef_s = getJMT(s_start, s_end, T);
+      result.coef_d = getJMT(d_start, d_end, T);
+      cout<<"Search failed"<<endl;
+      break;
+    }
 
 
-  } while (_j > max_j || _a > max_a);
+  } while (stat_d[2] > max_j || stat_d[1] > max_a ||stat_d[3] > max_a/2 || stat_d[0] > road_->max_v + max_a*step_t);
 
   return result;
 
