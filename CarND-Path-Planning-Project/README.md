@@ -138,7 +138,7 @@ The path planning is done in two steps:
  + collision penalty
  + occupancy of the lane.
  
-The action with the lowest cost is chosen and executed for one cycle. In the next cycle the process is repeated and the new plan is created. 
+The action with the lowest cost is chosen and executed for one cycle[getTrajectory in EgoVehicle class]. In the next cycle the process is repeated and the new plan is created. 
 
 
 To visualize the future trajectories points at each cycle the car movement is simulated up to 2 seconds ahead, ad the planned trajectory is appended to the points sent to the simulator. Thus it is possible to see the future plan of the car.
