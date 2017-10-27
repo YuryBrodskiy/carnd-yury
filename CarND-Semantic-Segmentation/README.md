@@ -32,5 +32,38 @@ python main.py
  - `project_tests.py`
  - Newest inference images from `runs` folder  (**all images from the most recent run**)
  
- ## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+# Report
+
+### *Abstract*
+The goals of this project are the following:
++ Build a Fully Convolutional Network(FCN) for Semantic Segmentation as described in [J.Long at al](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf)
++ Use pre-trained VGG net as base classification net
++ Build required deconvolution layers with skip connection
++ Train resulting FCN on Kitti Road dataset
++ Verify the results on the test images
+The required FCN was built and trained. The validation Intersection over Union metric is 82%
+
+## Network
+
+VGG net was used as the base classification net. The outputs of VGG Layers 3, 4, 7 were used as inputs to semantic segmentation layer. The architecture of the semantic segmentation layer is shown in figure below
+![semantic_segmentation_layer](./report_img/semantic_segmentation_layer.png)
+
+## Training
+
+As the capacity of VGG net is high and Kitti Road dataset is quite small to avoid over fit, a transfer learning approach was employed. Only the semantic segmentation layer is trained using Kitti Road dataset, while VGG net weights are left intact as they were trained on a much larger ILSVRC dataset. 
+Furthermore, Kitti Road dataset is augmented with following transformations
+
++ zoom & shift
++ zoom & rotate
++ vertical flip
++ horizontal flip
+
+The network is trained for 10 epochs with 8 images in batch on a total of 2023 images, where 90% of images used for training and 10% for validation.
+
+The trends in IoU and cross entropy loss per pixel  during training can be seen in the figure below
+![trend](./report_img/training_polts.png)
+
+The result of the semantic segmentation after each epoch is captured on the animation below:
+![ss](./report_img/learing_ss.gif)
+
+The final results of the semantic segmentation on the test set are in [folder](./runs/1509085431.2691891/images/)
